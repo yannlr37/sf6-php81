@@ -1,0 +1,62 @@
+version: '3.5'
+
+services:
+
+  db:
+    image: mysql:5.7
+    restart: always
+    container_name: ${PROJECT_NAME}_db
+    ports:
+      - ${SQL_PORT}:3306
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_ALLOW_EMPTY_PASSWORD=false
+      - MYSQL_RANDOM_ROOT_PASSWORD=false
+      - MYSQL_DATABASE=${DB_NAME}
+      - MYSQL_USER=${DB_USER}
+      - MYSQL_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - ./data/mysql:/var/lib/mysql
+      - ./logs/mysql:/var/log/mysql
+    networks:
+      custom_network: { }
+
+  web:
+    build: ./.docker/php74-apache
+    container_name: ${PROJECT_NAME}_web
+    hostname: ${PROJECT_NAME}
+    ports:
+      - ${WEB_PORT}:80
+    depends_on:
+      - db
+    environment:
+      - WORDPRESS_DB_HOST=${PROJECT_NAME}_db
+      - WORDPRESS_DB_NAME=${DB_NAME}
+      - WORDPRESS_DB_USER=${DB_USER}
+      - WORDPRESS_DB_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - ./code:/var/www/html:rw
+      - ./logs:/var/log:rw
+      - ./data/dump:/var/www/data:rw
+    networks:
+      custom_network: { }
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: ${PROJECT_NAME}_phpmyadmin
+    restart: always
+    environment:
+      - PMA_ARBITRARY=1
+      - PMA_HOST=db
+      - PMA_USER=${DB_USER}
+      - PMA_PASSWORD=${DB_PASSWORD}
+    ports:
+      - ${PMA_PORT}:80
+    depends_on:
+      - db
+    networks:
+      custom_network: { }
+
+networks:
+  custom_network:
+    name: ${PROJECT_NAME}

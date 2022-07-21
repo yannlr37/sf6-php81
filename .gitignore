@@ -1,0 +1,7 @@
+idea/
+vscode/
+data/
+logs/
+code/vendor/
+!code/var/
+code/var/*
